@@ -1,0 +1,38 @@
+name: win_release
+
+on: [workflow_dispatch]
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]  # 🔥 simplify while debugging
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - run: pip install packaging
+      - run: yarn install
+      - run: yarn build
+      - run: yarn production
+
+      - name: Electron Builder
+        uses: samuelmeuli/action-electron-builder@v1.6.0
+        with:
+          github_token: ${{ secrets.github_token }}
+          args: "-p never"
+
+      - name: Debug dist
+        run: dir dist
+        shell: cmd
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lofi-build
+          path: dist/*.exe
